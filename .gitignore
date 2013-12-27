@@ -1,0 +1,6 @@
+Jedi-Plugin-Auth-*
+.build
+*.swp
+*.bak
+*.tdy
+*.LOG
