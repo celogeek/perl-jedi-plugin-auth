@@ -15,7 +15,7 @@ use B::Hooks::EndOfScope;
 sub import {
 	my $target = caller;
 	on_scope_end {
-		$target->can('with')->('Jedi::Plugin::Session::Role');
+		$target->can('with')->('Jedi::Plugin::Auth::Role');
 	};
 	return;
 }
