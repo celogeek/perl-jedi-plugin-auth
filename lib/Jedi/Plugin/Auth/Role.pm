@@ -15,6 +15,7 @@ Create a new user
  $app->jedi_auth_signin(
     user     => 'admin',
     password => 'admin',
+    uuid     => 'XXXXXXXXXXXXXXX' #SHA1 Hex Base64
     roles    => ['admin'],
     info     => {
       activated => 0,
@@ -32,6 +33,7 @@ Roles are dynamically added. Your apps need to handle the relation between each 
 For example : admin include poweruser, user ...
 
 =cut
+
 sub jedi_auth_signin {
 
 }
