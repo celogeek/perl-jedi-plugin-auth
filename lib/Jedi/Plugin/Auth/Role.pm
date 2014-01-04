@@ -233,6 +233,7 @@ sub jedi_auth_logout {
 Update the user account
 
   $app->jedi_auth_update(
+    $request,
     user => 'admin',
     info => {
       activated => 1,
@@ -244,6 +245,7 @@ It will update the 'admin' user, and add/change the info.activated to 1. All the
 To clear an info key :
 
   $app->jedi_auth_update(
+    $request,
     user => 'admin',
     info => {
       blog => undef,
@@ -253,6 +255,26 @@ To clear an info key :
 =cut
 
 sub jedi_auth_update {
+  my ($self, $request, %params) = @_;
+
+  my ($username, $password, $info, $roles) = @params{qw/user password info roles/};  
+  return { status => 'ko', missing => ['user'] } if !defined $username;
+
+  my $user = $self->_jedi_auth_db->resultset('User')->find({user => $username});
+  return { status => 'ko', error_msg => 'user not found'} if !defined $user;
+
+  $user->password(sha1_hex($password)) if defined $password;
+
+  $user->update();
+  my $user_info = _user_to_hash($user);
+
+  my $session = $request->session_get;
+  if (defined $session && exists $session->{auth}) {
+    $session->{auth} = $user_info;
+    $request->session_set($session);
+  }
+
+  return { status => 'ok', %{$user_info} };
 
 }
 

@@ -133,6 +133,26 @@ test_psgi $jedi->start, sub {
       ok !exists $resp->{auth}, 'auth has been discarded';
     };
 
+    subtest "update user" => sub {
+      {
+        my $res = $cb->(GET '/update');
+        my $resp = decode_json($res->content);
+        is_deeply $resp, {status => 'ko', missing => ['user'] }, 'missing user';
+      }
+      {
+        my $res = $cb->(GET '/update?user=test3');
+        my $resp = decode_json($res->content);
+        is_deeply $resp, {status => 'ko', error_msg => 'user not found' }, 'user not found';
+      }
+      {
+        my $res = $cb->(GET '/update?user=test&password=uptest');
+        my $resp = decode_json($res->content);
+        is $resp->{status}, 'ok', 'update ok';
+        $res = $cb->(GET '/login?user=test&password=uptest');
+        $resp = decode_json($res->content);
+        is $resp->{status}, 'ok', 'password properly set';
+      }
+    };
   }
 };
 

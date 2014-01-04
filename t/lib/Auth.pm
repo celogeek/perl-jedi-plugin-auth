@@ -45,6 +45,19 @@ sub jedi_app {
     $response->body(encode_json($request->session_get // {}));
   });
 
+  $app->get('/update', sub {
+    my ($app, $request, $response) = @_;
+    my $res = $app->jedi_auth_update(
+      $request,
+      user => $request->params->{user},
+      password => $request->params->{password},
+      roles => $request->params->{roles},
+      info => decode_json($request->params->{info}//"{}"),
+    );
+    $response->status(200);
+    $response->body(encode_json($res));
+  });
+
 }
 
 1;
