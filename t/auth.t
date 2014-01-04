@@ -47,6 +47,15 @@ test_psgi $jedi->start, sub {
       like $resp->{uuid}, qr{^\w+\-\w+\-\w+\-\w+\-\w+$}x, 'uuid ok';
       is_deeply $resp->{info}, {activated => 1}, 'info is ok';
     };
+
+    subtest "signin again user" => sub 
+    {
+      my $res = $cb->(GET '/signin?user=test&password=test&roles=test,admin&info={"activated":"1"}');
+      my $resp = decode_json($res->content);
+      is $resp->{status}, 'ko', 'status ko';
+      like $resp->{error_msg}, qr{user is not uniq}, 'user already exists';
+    };
+
     subtest "signin user2" => sub
     {
       my $res = $cb->(GET '/signin?user=test2&password=test&roles=test&info={"activated":"0"}');
