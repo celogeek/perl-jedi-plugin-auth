@@ -78,6 +78,14 @@ sub jedi_app {
     $response->status(200);
     $response->body(encode_json($users));
   });
+
+  $app->get('/signout', sub {
+    my ($app, $request, $response) = @_;
+    my $users = $app->jedi_auth_signout($request->params->{user});
+    $response->status(200);
+    $response->body(encode_json($users));
+  });
+
 }
 
 1;

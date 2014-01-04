@@ -281,8 +281,26 @@ test_psgi $jedi->start, sub {
     $users = decode_json($res->content);
     is @$users, 1, 'test only was found';
     is_deeply [map {$_->{user}} @$users], [qw/test/], 'test found';
+  };
 
-  }
+  subtest "signout" => sub {
+    my $res = $cb->(GET '/signout');
+    my $resp = decode_json($res->content);
+    is_deeply $resp, {status => 'ko', missing => ['user']}, 'missing user';
+
+    $res = $cb->(GET '/signout?user=test3');
+    $resp = decode_json($res->content);
+    is_deeply $resp, {status => 'ko', error_msg => 'user not found'}, 'test3 doesnt exists';
+
+    $res = $cb->(GET '/signout?user=test2');
+    $resp = decode_json($res->content);
+    is_deeply $resp, {status => 'ok'}, 'test2 destroy';
+
+    $res = $cb->(GET '/users');
+    my $users = decode_json($res->content);
+    is @$users, 1, '1 user left';
+    is_deeply [map {$_->{user}} @$users], [qw/test/], 'test only was found';
+  };
 
 };
 done_testing;

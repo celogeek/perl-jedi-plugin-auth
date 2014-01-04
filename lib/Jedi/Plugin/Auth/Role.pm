@@ -159,6 +159,23 @@ sub jedi_auth_signin {
   };
 }
 
+=method jedi_auth_signout
+
+Destroy an user
+
+  $app->jedi_auth_signout('admin')
+
+=cut
+
+sub jedi_auth_signout {
+  my ($self, $username) = @_;
+  return {status => 'ko', missing => ['user']} if !defined $username;
+  my $user = $self->_jedi_auth_db->resultset('User')->search({user => $username});
+  return {status => 'ko', error_msg => 'user not found'} if !$user->count;
+  $user->delete_all;
+  return {status => 'ok'};
+}
+
 =method jedi_auth_login
 
 Login the user
