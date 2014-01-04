@@ -180,8 +180,9 @@ sub jedi_auth_login {
   my ($self, %params) = @_;
   return { status => 'ko' } if !defined $params{user} || !defined $params{password};
 
-  my $user = $self->_jedi_auth_db->find({user => $params{user}, password => sha1($params{password})});
+  my $user = $self->_jedi_auth_db->resultset('User')->find({user => $params{user}});
   return { status => 'ko' } if !defined $user;
+  return { status => 'ko' } if $user->password ne sha1($params{password});
 
   return { 
     status => 'ok',

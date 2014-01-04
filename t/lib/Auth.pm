@@ -17,7 +17,18 @@ sub jedi_app {
     );
     $response->status(200);
     $response->body(encode_json($res));
-  })
+  });
+
+  $app->get('/login', sub {
+    my ($app, $request, $response) = @_;
+    my $res = $app->jedi_auth_login(
+      user => $request->params->{user},
+      password => $request->params->{password},
+    );
+    $response->status(200);
+    $response->body(encode_json($res));
+  });
+
 }
 
 1;
