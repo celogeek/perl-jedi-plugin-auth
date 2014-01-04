@@ -58,6 +58,13 @@ sub jedi_app {
     $response->body(encode_json($res));
   });
 
+  $app->get('users_with_role', sub {
+    my ($app, $request, $response) = @_;
+    my $users = $app->jedi_auth_users_with_role($request->params->{role});
+    $response->status(200);
+    $response->body(encode_json($users));
+  });
+
 }
 
 1;

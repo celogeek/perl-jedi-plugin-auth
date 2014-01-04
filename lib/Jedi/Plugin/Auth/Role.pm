@@ -309,7 +309,10 @@ Only the "user" key is returned
 =cut
 
 sub jedi_auth_users_with_role {
-
+  my ($self, $role) = @_;
+  return [] if !defined $role;
+  my @users = $self->_jedi_auth_db->resultset('Role')->find($role)->users;
+  return [map{$_->name} @users];
 }
 
 =method jedi_auth_users_count
