@@ -36,16 +36,11 @@ sub _prepare_database {
 sub _user_to_hash {
   my ($user) = @_;
 
-  my @roles_name;
-  for my $role($user->roles) {
-    push @roles_name, $role->name;
-  }
-
   return {
     user => $user->user,
     uuid => $uuid_generator->to_string($user->uuid),
     info => decode_json($user->info),
-    roles => \@roles_name,
+    roles => [map { $_->name } $user->roles->all()],
   }
 }
 
