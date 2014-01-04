@@ -287,7 +287,7 @@ sub jedi_auth_update {
   my $user_info = _user_to_hash($user);
 
   my $session = $request->session_get;
-  if (defined $session && exists $session->{auth}) {
+  if (defined $session && exists $session->{auth} && $session->{auth}{user} eq $username) {
     $session->{auth} = $user_info;
     $request->session_set($session);
   }

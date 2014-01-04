@@ -193,7 +193,36 @@ test_psgi $jedi->start, sub {
       my $session = decode_json($res->content);
       is_deeply $session->{auth}{info}, {email => 'test@test.com'}, 'info ok';
       is_deeply $session->{auth}{roles}, [qw/x y z/], 'roles ok';
+    };
+    subtest 'update user and log into another one' => sub {
+      my $res = $cb->(GET '/login?user=test&password=uptest');
+      $cookie = $res->header('Set-Cookie')->as_string;
+      $res = $cb->(HTTP::Request->new(
+        'GET' => '/update?user=test2&info={"ok":1}&roles=a,b,c', HTTP::Headers->new(
+          'Cookie' => $cookie,
+        )
+      ));
 
+      $res = $cb->(HTTP::Request->new(
+        'GET' => '/auth_session', HTTP::Headers->new(
+          'Cookie' => $cookie,
+        )
+      ));
+      my $session = decode_json($res->content);
+      is_deeply $session->{auth}{info}, {email => 'test@test.com'}, 'info ok';
+      is_deeply $session->{auth}{roles}, [qw/x y z/], 'roles ok';
+      
+      $res = $cb->(GET '/login?user=test2&password=test');
+      $cookie = $res->header('Set-Cookie')->as_string;
+
+      $res = $cb->(HTTP::Request->new(
+        'GET' => '/auth_session', HTTP::Headers->new(
+          'Cookie' => $cookie,
+        )
+      ));
+      my $other_session = decode_json($res->content);
+      is_deeply $other_session->{auth}{info}, {activated => 0, ok => 1}, 'info ok';
+      is_deeply $other_session->{auth}{roles}, [qw/a b c/], 'roles ok';
     };
   }
 };
