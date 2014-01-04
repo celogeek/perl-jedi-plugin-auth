@@ -133,7 +133,7 @@ sub jedi_auth_signin {
   }
   return { status => 'ko', missing => \@missing } if @missing;
 
-  $params{roles} = [split(/,/, $params{roles} // '')] if ref $params{roles} ne 'ARRAY';
+  $params{roles} = [split(/,/x, $params{roles} // '')] if ref $params{roles} ne 'ARRAY';
   $params{info} //= {};
 
   my $user;
@@ -177,7 +177,7 @@ Return :
 =cut
 
 sub jedi_auth_login {
-  my ($self) = @_;
+
 }
 
 =method jedi_auth_logout
