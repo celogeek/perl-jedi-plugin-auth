@@ -109,7 +109,18 @@ sub jedi_auth_signin {
     $user->add_to_roles({name => $role_name});
   }
 
-  return { status => 'ok' };
+  my @roles_name;
+  for my $role($user->roles) {
+    push @roles_name, $role->name;
+  }
+
+  return { 
+    status => 'ok',
+    user => $user->user,
+    uuid => $uuid_generator->to_string($user->uuid),
+    info => decode_json($user->info),
+    roles => \@roles_name,
+  };
 }
 
 =method jedi_auth_login
