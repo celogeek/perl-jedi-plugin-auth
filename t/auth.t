@@ -132,99 +132,99 @@ test_psgi $jedi->start, sub {
       my $resp = decode_json($res->content);
       ok !exists $resp->{auth}, 'auth has been discarded';
     };
+  };
 
-    subtest "update user" => sub {
-      {
-        my $res = $cb->(GET '/update');
-        my $resp = decode_json($res->content);
-        is_deeply $resp, {status => 'ko', missing => ['user'] }, 'missing user';
-      }
-      {
-        my $res = $cb->(GET '/update?user=test3');
-        my $resp = decode_json($res->content);
-        is_deeply $resp, {status => 'ko', error_msg => 'user not found' }, 'user not found';
-      }
-      {
-        my $res = $cb->(GET '/update?user=test&password=uptest');
-        my $resp = decode_json($res->content);
-        is $resp->{status}, 'ok', 'update ok';
-        $res = $cb->(GET '/login?user=test&password=uptest');
-        $resp = decode_json($res->content);
-        is $resp->{status}, 'ok', 'password properly set';
-      }
-      {
-        my $res = $cb->(GET '/update?user=test&info={"email":"me@celogeek.com"}');
-        my $resp = decode_json($res->content);
-        is $resp->{status}, 'ok', 'update ok';
-        is_deeply $resp->{info}, {'activated' => 1, email => 'me@celogeek.com'}, 'info properly updated';
-      }
-      {
-        my $res = $cb->(GET '/update?user=test&info={"activated":null}');
-        my $resp = decode_json($res->content);
-        is $resp->{status}, 'ok', 'update ok';
-        is_deeply $resp->{info}, {email => 'me@celogeek.com'}, 'info deleted';
-      }
-      {
-        my $res = $cb->(GET '/update?user=test&roles=a,b,c');
-        my $resp = decode_json($res->content);
-        is $resp->{status}, 'ok', 'update ok';
-        is_deeply $resp->{roles}, [qw/a b c/], 'roles properly sets';
-      }
-      {
-        my $res = $cb->(GET '/update?user=test&roles=a,b');
-        my $resp = decode_json($res->content);
-        is $resp->{status}, 'ok', 'update ok';
-        is_deeply $resp->{roles}, [qw/a b/], 'roles properly sets';
-      }
-    };
-    subtest 'update user and check session' => sub {
-      my $res = $cb->(GET '/login?user=test&password=uptest');
-      $cookie = $res->header('Set-Cookie')->as_string;
-      $res = $cb->(HTTP::Request->new(
-        'GET' => '/update?user=test&info={"email":"test@test.com"}&roles=x,y,z', HTTP::Headers->new(
-          'Cookie' => $cookie,
-        )
-      ));
-      $res = $cb->(HTTP::Request->new(
-        'GET' => '/auth_session', HTTP::Headers->new(
-          'Cookie' => $cookie,
-        )
-      ));
-      my $session = decode_json($res->content);
-      is_deeply $session->{auth}{info}, {email => 'test@test.com'}, 'info ok';
-      is_deeply $session->{auth}{roles}, [qw/x y z/], 'roles ok';
-    };
-    subtest 'update user and log into another one' => sub {
-      my $res = $cb->(GET '/login?user=test&password=uptest');
-      $cookie = $res->header('Set-Cookie')->as_string;
-      $res = $cb->(HTTP::Request->new(
-        'GET' => '/update?user=test2&info={"ok":1}&roles=a,b,c', HTTP::Headers->new(
-          'Cookie' => $cookie,
-        )
-      ));
+  subtest "update user" => sub {
+    {
+      my $res = $cb->(GET '/update');
+      my $resp = decode_json($res->content);
+      is_deeply $resp, {status => 'ko', missing => ['user'] }, 'missing user';
+    }
+    {
+      my $res = $cb->(GET '/update?user=test3');
+      my $resp = decode_json($res->content);
+      is_deeply $resp, {status => 'ko', error_msg => 'user not found' }, 'user not found';
+    }
+    {
+      my $res = $cb->(GET '/update?user=test&password=uptest');
+      my $resp = decode_json($res->content);
+      is $resp->{status}, 'ok', 'update ok';
+      $res = $cb->(GET '/login?user=test&password=uptest');
+      $resp = decode_json($res->content);
+      is $resp->{status}, 'ok', 'password properly set';
+    }
+    {
+      my $res = $cb->(GET '/update?user=test&info={"email":"me@celogeek.com"}');
+      my $resp = decode_json($res->content);
+      is $resp->{status}, 'ok', 'update ok';
+      is_deeply $resp->{info}, {'activated' => 1, email => 'me@celogeek.com'}, 'info properly updated';
+    }
+    {
+      my $res = $cb->(GET '/update?user=test&info={"activated":null}');
+      my $resp = decode_json($res->content);
+      is $resp->{status}, 'ok', 'update ok';
+      is_deeply $resp->{info}, {email => 'me@celogeek.com'}, 'info deleted';
+    }
+    {
+      my $res = $cb->(GET '/update?user=test&roles=a,b,c');
+      my $resp = decode_json($res->content);
+      is $resp->{status}, 'ok', 'update ok';
+      is_deeply $resp->{roles}, [qw/a b c/], 'roles properly sets';
+    }
+    {
+      my $res = $cb->(GET '/update?user=test&roles=a,b');
+      my $resp = decode_json($res->content);
+      is $resp->{status}, 'ok', 'update ok';
+      is_deeply $resp->{roles}, [qw/a b/], 'roles properly sets';
+    }
+  };
 
-      $res = $cb->(HTTP::Request->new(
-        'GET' => '/auth_session', HTTP::Headers->new(
-          'Cookie' => $cookie,
-        )
-      ));
-      my $session = decode_json($res->content);
-      is_deeply $session->{auth}{info}, {email => 'test@test.com'}, 'info ok';
-      is_deeply $session->{auth}{roles}, [qw/x y z/], 'roles ok';
-      
-      $res = $cb->(GET '/login?user=test2&password=test');
-      $cookie = $res->header('Set-Cookie')->as_string;
+  subtest 'update user and check session' => sub {
+    my $res = $cb->(GET '/login?user=test&password=uptest');
+    my $cookie = $res->header('Set-Cookie')->as_string;
+    $res = $cb->(HTTP::Request->new(
+      'GET' => '/update?user=test&info={"email":"test@test.com"}&roles=x,y,z', HTTP::Headers->new(
+        'Cookie' => $cookie,
+      )
+    ));
+    $res = $cb->(HTTP::Request->new(
+      'GET' => '/auth_session', HTTP::Headers->new(
+        'Cookie' => $cookie,
+      )
+    ));
+    my $session = decode_json($res->content);
+    is_deeply $session->{auth}{info}, {email => 'test@test.com'}, 'info ok';
+    is_deeply $session->{auth}{roles}, [qw/x y z/], 'roles ok';
+  };
 
-      $res = $cb->(HTTP::Request->new(
-        'GET' => '/auth_session', HTTP::Headers->new(
-          'Cookie' => $cookie,
-        )
-      ));
-      my $other_session = decode_json($res->content);
-      is_deeply $other_session->{auth}{info}, {activated => 0, ok => 1}, 'info ok';
-      is_deeply $other_session->{auth}{roles}, [qw/a b c/], 'roles ok';
-    };
-  }
+  subtest 'update user and log into another one' => sub {
+    my $res = $cb->(GET '/login?user=test&password=uptest');
+    my $cookie = $res->header('Set-Cookie')->as_string;
+    $res = $cb->(HTTP::Request->new(
+      'GET' => '/update?user=test2&info={"ok":1}&roles=a,b,c', HTTP::Headers->new(
+        'Cookie' => $cookie,
+      )
+    ));
+    $res = $cb->(HTTP::Request->new(
+      'GET' => '/auth_session', HTTP::Headers->new(
+        'Cookie' => $cookie,
+      )
+    ));
+    my $session = decode_json($res->content);
+    is_deeply $session->{auth}{info}, {email => 'test@test.com'}, 'info ok';
+    is_deeply $session->{auth}{roles}, [qw/x y z/], 'roles ok';
+    
+    $res = $cb->(GET '/login?user=test2&password=test');
+    $cookie = $res->header('Set-Cookie')->as_string;
+    $res = $cb->(HTTP::Request->new(
+      'GET' => '/auth_session', HTTP::Headers->new(
+        'Cookie' => $cookie,
+      )
+    ));
+    my $other_session = decode_json($res->content);
+    is_deeply $other_session->{auth}{info}, {activated => 0, ok => 1}, 'info ok';
+    is_deeply $other_session->{auth}{roles}, [qw/a b c/], 'roles ok';
+  };
+
 };
-
 done_testing;
