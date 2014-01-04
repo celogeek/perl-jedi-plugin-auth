@@ -253,5 +253,10 @@ test_psgi $jedi->start, sub {
 
   };
 
+  subtest "users count" => sub {
+    my $res = $cb->(GET '/users_count');
+    is $res->content, 2, '2 users found';
+  };
+
 };
 done_testing;

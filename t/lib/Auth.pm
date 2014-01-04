@@ -65,6 +65,13 @@ sub jedi_app {
     $response->body(encode_json($users));
   });
 
+  $app->get('/users_count', sub {
+    my ($app, $request, $response) = @_;
+    my $count = $app->jedi_auth_users_count;
+    $response->status(200);
+    $response->body($count);
+  });
+
 }
 
 1;

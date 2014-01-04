@@ -330,7 +330,8 @@ Return the number of users in the databases
 =cut
 
 sub jedi_auth_users_count {
-
+  my ($self) = @_;
+  return $self->_jedi_auth_db->resultset('User')->count;
 }
 
 =method jedi_auth_user_roles
