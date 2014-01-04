@@ -8,7 +8,7 @@ use warnings;
 
 use feature 'state';
 use Carp;
-use Digest::SHA1 qw/sha1/;
+use Digest::SHA1 qw/sha1_hex/;
 use Data::UUID;
 use Path::Class;
 use Jedi::Plugin::Auth::DB;
@@ -38,7 +38,7 @@ sub _user_to_hash {
 
   return {
     user => $user->user,
-    uuid => $uuid_generator->to_string($user->uuid),
+    uuid => $user->uuid,
     info => decode_json($user->info),
     roles => [map { $_->name } $user->roles->all()],
   }
@@ -141,8 +141,8 @@ sub jedi_auth_signin {
   return { status => 'ko', error_msg => "$@" } if ! eval {
     $user = $self->_jedi_auth_db->resultset('User')->create({
       user => $params{user},
-      password => sha1($params{password}),
-      uuid => $uuid_generator->create(),
+      password => sha1_hex($params{password}),
+      uuid => $uuid_generator->create_str(),
       info => encode_json($params{info}),
     });
     1;
@@ -180,9 +180,8 @@ sub jedi_auth_login {
   my ($self, %params) = @_;
   return { status => 'ko' } if !defined $params{user} || !defined $params{password};
 
-  my $user = $self->_jedi_auth_db->resultset('User')->find({user => $params{user}});
+  my $user = $self->_jedi_auth_db->resultset('User')->search({user => $params{user}, password => sha1_hex($params{password})})->first;
   return { status => 'ko' } if !defined $user;
-  return { status => 'ko' } if $user->password ne sha1($params{password});
 
   return { 
     status => 'ok',
