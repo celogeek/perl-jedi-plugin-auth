@@ -41,6 +41,15 @@ test_psgi $jedi->start, sub {
           like $resp->{uuid}, qr{^\w+\-\w+\-\w+\-\w+\-\w+$}x, 'uuid ok';
           is_deeply $resp->{info}, {activated => 1}, 'info is ok';
   }
+  {
+          my $res = $cb->(GET '/signin?user=test2&password=test&roles=test&info={"activated":"0"}');
+          my $resp = decode_json($res->content);
+          is $resp->{status}, 'ok', 'status ok';
+          is $resp->{user}, 'test2', 'user name ok';
+          cmp_bag $resp->{roles}, ['test'], 'roles ok';
+          like $resp->{uuid}, qr{^\w+\-\w+\-\w+\-\w+\-\w+$}x, 'uuid ok';
+          is_deeply $resp->{info}, {activated => 0}, 'info is ok';
+  }
 };
 
 done_testing;
