@@ -183,7 +183,7 @@ test_psgi $jedi->start, sub {
     my $res = $cb->(GET '/login?user=test&password=uptest');
     my $cookie = $res->header('Set-Cookie')->as_string;
     $res = $cb->(HTTP::Request->new(
-      'GET' => '/update?user=test&info={"email":"test@test.com"}&roles=x,y,z', HTTP::Headers->new(
+      'GET' => '/update?user=test&info={"email":"test@test.com"}&roles=a,x,y,z', HTTP::Headers->new(
         'Cookie' => $cookie,
       )
     ));
@@ -194,7 +194,7 @@ test_psgi $jedi->start, sub {
     ));
     my $session = decode_json($res->content);
     is_deeply $session->{auth}{info}, {email => 'test@test.com'}, 'info ok';
-    is_deeply $session->{auth}{roles}, [qw/x y z/], 'roles ok';
+    is_deeply $session->{auth}{roles}, [qw/a x y z/], 'roles ok';
   };
 
   subtest 'update user and log into another one' => sub {
@@ -212,7 +212,7 @@ test_psgi $jedi->start, sub {
     ));
     my $session = decode_json($res->content);
     is_deeply $session->{auth}{info}, {email => 'test@test.com'}, 'info ok';
-    is_deeply $session->{auth}{roles}, [qw/x y z/], 'roles ok';
+    is_deeply $session->{auth}{roles}, [qw/a x y z/], 'roles ok';
     
     $res = $cb->(GET '/login?user=test2&password=test');
     $cookie = $res->header('Set-Cookie')->as_string;
@@ -224,6 +224,33 @@ test_psgi $jedi->start, sub {
     my $other_session = decode_json($res->content);
     is_deeply $other_session->{auth}{info}, {activated => 0, ok => 1}, 'info ok';
     is_deeply $other_session->{auth}{roles}, [qw/a b c/], 'roles ok';
+  };
+
+  subtest 'users with role' => sub {
+    my $res = $cb->(GET '/users_with_role');
+    my $users = decode_json($res->content);
+    is_deeply $users, [], 'role params missing';
+
+    $res = $cb->(GET '/users_with_role?role=admin');
+    $users = decode_json($res->content);
+    is_deeply $users, [], 'no admin';
+
+    $res = $cb->(GET '/users_with_role?role=a');
+    $users = decode_json($res->content);
+    is_deeply $users, [qw/test test2/], 'test and test2 has the role a';
+
+    $res = $cb->(GET '/users_with_role?role=b');
+    $users = decode_json($res->content);
+    is_deeply $users, [qw/test2/], 'test2 has the role b';
+
+    $res = $cb->(GET '/users_with_role?role=x');
+    $users = decode_json($res->content);
+    is_deeply $users, [qw/test/], 'test has the role x';
+
+    $res = $cb->(GET '/users_with_role?role=miss');
+    $users = decode_json($res->content);
+    is_deeply $users, [], 'no one has the role miss';
+
   };
 
 };
