@@ -177,6 +177,24 @@ test_psgi $jedi->start, sub {
         is_deeply $resp->{roles}, [qw/a b/], 'roles properly sets';
       }
     };
+    subtest 'update user and check session' => sub {
+      my $res = $cb->(GET '/login?user=test&password=uptest');
+      $cookie = $res->header('Set-Cookie')->as_string;
+      $res = $cb->(HTTP::Request->new(
+        'GET' => '/update?user=test&info={"email":"test@test.com"}&roles=x,y,z', HTTP::Headers->new(
+          'Cookie' => $cookie,
+        )
+      ));
+      $res = $cb->(HTTP::Request->new(
+        'GET' => '/auth_session', HTTP::Headers->new(
+          'Cookie' => $cookie,
+        )
+      ));
+      my $session = decode_json($res->content);
+      is_deeply $session->{auth}{info}, {email => 'test@test.com'}, 'info ok';
+      is_deeply $session->{auth}{roles}, [qw/x y z/], 'roles ok';
+
+    };
   }
 };
 
