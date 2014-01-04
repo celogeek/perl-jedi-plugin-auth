@@ -15,6 +15,8 @@ use Jedi::Plugin::Auth::DB;
 use DBIx::Class::Migration;
 use JSON;
 
+my $uuid_generator = Data::UUID->new;
+
 # connect / create / prepare db
 sub _prepare_database {
   my ($dbfile) = @_;
@@ -29,6 +31,22 @@ sub _prepare_database {
   $migration->upgrade;
 
   return $schema;
+}
+
+sub _user_to_hash {
+  my ($user) = @_;
+
+  my @roles_name;
+  for my $role($user->roles) {
+    push @roles_name, $role->name;
+  }
+
+  return {
+    user => $user->user,
+    uuid => $uuid_generator->to_string($user->uuid),
+    info => decode_json($user->info),
+    roles => \@roles_name,
+  }
 }
 
 use Moo::Role;
@@ -79,11 +97,41 @@ Roles are dynamically added. Your apps need to handle the relation between each 
 
 For example : admin include poweruser, user ...
 
+Return :
+  {
+    status => 'ok',
+    user => 'admin',
+    uuid => Data::UUID string,
+    info => {
+      activated => 0,
+      label     => 'Administrator',
+      email     => 'admin@admin.local',
+      blog      => 'http://blog.celogeek.com',
+      live      => 'geistteufel@live.fr',
+      created_at => 1388163353,
+      last_login => 1388164353,
+    },
+    roles => ['admin'],
+  }
+
+In case of missing fields :
+
+  {
+    status => 'ko',
+    missing => ['list of missing fields'],
+  }
+
+For db errors (duplicate ...) :
+
+  {
+    status => 'ko',
+    error_msg => "$@",
+  }
+
 =cut
 
 sub jedi_auth_signin {
   my ($self, %params) = @_;
-  state $uuid_generator = Data::UUID->new;
   my @missing;
   for my $key(qw/user password roles/) {
     push @missing, $key if !defined $params{$key};
@@ -109,17 +157,9 @@ sub jedi_auth_signin {
     $user->add_to_roles({name => $role_name});
   }
 
-  my @roles_name;
-  for my $role($user->roles) {
-    push @roles_name, $role->name;
-  }
-
   return { 
     status => 'ok',
-    user => $user->user,
-    uuid => $uuid_generator->to_string($user->uuid),
-    info => decode_json($user->info),
-    roles => \@roles_name,
+    %{_user_to_hash($user)}
   };
 }
 
@@ -132,15 +172,17 @@ Login the user
     password => 'admin',
   );
 
-  Return :
+Return :
   
-    0 : auth failed
-    1 : auth ok
+  { status => 'ok', uuid => "uuid string", info => { INFO HASH }, roles => [ ROLES ] }
+  
+  { status => 'ko' }
+  
 
 =cut
 
 sub jedi_auth_login {
-
+  my ($self) = @_;
 }
 
 =method jedi_auth_logout

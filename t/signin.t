@@ -33,13 +33,13 @@ test_psgi $jedi->start, sub {
           is_deeply($resp, {status => 'ko', missing => [qw/roles/]}, 'missing roles');
   }
   {
-          my $res = $cb->(GET '/signin?user=test&password=test&roles=test,admin');
-          #note $res->content;
+          my $res = $cb->(GET '/signin?user=test&password=test&roles=test,admin&info={"activated":"1"}');
           my $resp = decode_json($res->content);
           is $resp->{status}, 'ok', 'status ok';
           is $resp->{user}, 'test', 'user name ok';
           cmp_bag $resp->{roles}, ['test', 'admin'], 'roles ok';
-          like $resp->{uuid}, qr{^\w+\-\w+\-\w+\-\w+\-\w+$}x, 'uuid ok'
+          like $resp->{uuid}, qr{^\w+\-\w+\-\w+\-\w+\-\w+$}x, 'uuid ok';
+          is_deeply $resp->{info}, {activated => 1}, 'info is ok';
   }
 };
 

@@ -13,6 +13,7 @@ sub jedi_app {
       user => $request->params->{user},
       password => $request->params->{password},
       roles => $request->params->{roles},
+      info => decode_json($request->params->{info}//"{}"),
     );
     $response->status(200);
     $response->body(encode_json($res));
