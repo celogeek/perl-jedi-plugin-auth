@@ -152,6 +152,30 @@ test_psgi $jedi->start, sub {
         $resp = decode_json($res->content);
         is $resp->{status}, 'ok', 'password properly set';
       }
+      {
+        my $res = $cb->(GET '/update?user=test&info={"email":"me@celogeek.com"}');
+        my $resp = decode_json($res->content);
+        is $resp->{status}, 'ok', 'update ok';
+        is_deeply $resp->{info}, {'activated' => 1, email => 'me@celogeek.com'}, 'info properly updated';
+      }
+      {
+        my $res = $cb->(GET '/update?user=test&info={"activated":null}');
+        my $resp = decode_json($res->content);
+        is $resp->{status}, 'ok', 'update ok';
+        is_deeply $resp->{info}, {email => 'me@celogeek.com'}, 'info deleted';
+      }
+      {
+        my $res = $cb->(GET '/update?user=test&roles=a,b,c');
+        my $resp = decode_json($res->content);
+        is $resp->{status}, 'ok', 'update ok';
+        is_deeply $resp->{roles}, [qw/a b c/], 'roles properly sets';
+      }
+      {
+        my $res = $cb->(GET '/update?user=test&roles=a,b');
+        my $resp = decode_json($res->content);
+        is $resp->{status}, 'ok', 'update ok';
+        is_deeply $resp->{roles}, [qw/a b/], 'roles properly sets';
+      }
     };
   }
 };

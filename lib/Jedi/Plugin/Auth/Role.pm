@@ -148,9 +148,7 @@ sub jedi_auth_signin {
     1;
   };
 
-  for my $role_name(@{$params{roles}}) {
-    $user->add_to_roles({name => $role_name});
-  }
+  $user->set_roles([map {{name => $_}} @{$params{roles}}]);
 
   return { 
     status => 'ok',
@@ -263,7 +261,27 @@ sub jedi_auth_update {
   my $user = $self->_jedi_auth_db->resultset('User')->find({user => $username});
   return { status => 'ko', error_msg => 'user not found'} if !defined $user;
 
+  # password
   $user->password(sha1_hex($password)) if defined $password;
+
+  # info
+  if (ref $info eq 'HASH') {
+    my $current_info = decode_json($user->info);
+    for my $k(keys %$info) {
+      my $v = $info->{$k};
+      if (defined $v) {
+        $current_info->{$k} = $v;
+      } else {
+        delete $current_info->{$k};
+      }
+    }
+    $user->info(encode_json($current_info));
+  }
+
+  if (defined $roles) {
+    $roles = [split /,/x, $roles] if !ref $roles;
+    $user->set_roles([map {{name => $_ }} @$roles]);
+  }
 
   $user->update();
   my $user_info = _user_to_hash($user);
