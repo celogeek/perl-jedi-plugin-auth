@@ -1,4 +1,4 @@
-package t::lib::SignIn;
+package t::lib::Auth;
 use Jedi::App;
 use Jedi::Plugin::Session;
 use Jedi::Plugin::Auth;

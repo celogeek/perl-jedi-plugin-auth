@@ -13,7 +13,7 @@ use Test::File::ShareDir
 ;
 
 my $jedi = Jedi->new;
-$jedi->road('/', 't::lib::SignIn');
+$jedi->road('/', 't::lib::Auth');
 
 test_psgi $jedi->start, sub {
   my $cb = shift;
