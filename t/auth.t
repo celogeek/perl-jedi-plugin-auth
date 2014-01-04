@@ -88,11 +88,15 @@ test_psgi $jedi->start, sub {
             is $resp->{status}, 'ko', 'bad password';
     }
   
-    {
+    subtest "login user" => sub {
             # bad password
             my $res = $cb->(GET '/login?user=test&password=test');
             my $resp = decode_json($res->content);
-            is $resp->{status}, 'ok', 'user found';
+            is $resp->{status}, 'ok', 'status ok';
+            is $resp->{user}, 'test', 'user name ok';
+            cmp_bag $resp->{roles}, ['test', 'admin'], 'roles ok';
+            like $resp->{uuid}, qr{^\w+\-\w+\-\w+\-\w+\-\w+$}x, 'uuid ok';
+            is_deeply $resp->{info}, {activated => 1}, 'info is ok';
     }
   
   }
