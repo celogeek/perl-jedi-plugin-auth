@@ -165,6 +165,13 @@ Destroy an user
 
   $app->jedi_auth_signout('admin')
 
+If you want to destroy the current user, ensure to logout first
+
+  if ($request->session_get->{auth}{user} eq 'admin') {
+    $app->jedi_auth_logout($request);
+  }
+  $app->jedi_auth_signout('admin')
+
 =cut
 
 sub jedi_auth_signout {
