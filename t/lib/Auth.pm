@@ -12,7 +12,7 @@ sub jedi_app {
     my $res = $app->jedi_auth_signin(
       user => $request->params->{user},
       password => $request->params->{password},
-      roles => $request->params->{roles},
+      roles => [split /,/x, $request->params->{roles} // ''],
       info => decode_json($request->params->{info}//"{}"),
     );
     $response->status(200);
@@ -51,7 +51,7 @@ sub jedi_app {
       $request,
       user => $request->params->{user},
       password => $request->params->{password},
-      roles => $request->params->{roles},
+      roles => [split /,/x, $request->params->{roles} // ''],
       info => decode_json($request->params->{info}//"{}"),
     );
     $response->status(200);
@@ -72,6 +72,12 @@ sub jedi_app {
     $response->body($count);
   });
 
+  $app->get('/users', sub {
+    my ($app, $request, $response) = @_;
+    my $users = $app->jedi_auth_users_with_role($request->params->{role});
+    $response->status(200);
+    $response->body(encode_json($users));
+  });
 }
 
 1;

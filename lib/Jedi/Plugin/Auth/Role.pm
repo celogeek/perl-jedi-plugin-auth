@@ -127,14 +127,17 @@ For db errors (duplicate ...) :
 
 sub jedi_auth_signin {
   my ($self, %params) = @_;
+  delete $params{roles} if ref $params{roles} ne 'ARRAY';
+  delete $params{roles} if !@{$params{roles}};
+
   my @missing;
   for my $key(qw/user password roles/) {
     push @missing, $key if !defined $params{$key};
   }
   return { status => 'ko', missing => \@missing } if @missing;
 
-  $params{roles} = [split(/,/x, $params{roles} // '')] if ref $params{roles} ne 'ARRAY';
-  $params{info} //= {};
+  $params{roles} = [] if ref $params{roles} ne 'ARRAY';
+  $params{info}  = {} if ref $params{info} ne 'HASH';
 
   my $user;
 
@@ -278,8 +281,7 @@ sub jedi_auth_update {
     $user->info(encode_json($current_info));
   }
 
-  if (defined $roles) {
-    $roles = [split /,/x, $roles] if !ref $roles;
+  if (ref $roles eq 'ARRAY') {
     $user->set_roles([map {{name => $_ }} @$roles]);
   }
 
@@ -334,46 +336,28 @@ sub jedi_auth_users_count {
   return $self->_jedi_auth_db->resultset('User')->count;
 }
 
-=method jedi_auth_user_roles
+=method jedi_auth_users
 
-Return the role of an user
+Return the list of all users with info :
 
-  $app->jedi_auth_user_roles('celogeek')
+  $app->jedi_auth_users
 
-  # ["admin", "reviewer"]
+Return only the info of the user admin :
 
-=cut
+  $app->jedi_auth_users('admin')
 
-sub jedi_auth_user_roles {
+Return the info of user admin and test :
 
-}
-
-=method jedi_auth_user_info
-
-Return the info of the users
-
-  $app->jedi_auth_user_info('admin')
-
-  # {
-  #    activated => 0,
-  #    label     => 'Administrator',
-  #    email     => 'admin@admin.local',
-  #    blog      => 'http://blog.celogeek.com',
-  #    live      => 'geistteufel@live.fr',
-  # }
-
-  $app->jedi_auth_user_info('admin', 'activated')
-
-  # 0
-
-  $app->jedi_auth_user_info('admin', 'email')
-
-  # admin@admin.local
+  $app->jedi_auth_users('admin', 'test')
 
 =cut
+sub jedi_auth_users {
+  my ($self, @usernames) = @_;
 
-sub jedi_auth_user_info {
+  my $users = $self->_jedi_auth_db->resultset('User');
+  $users = $users->search({user => \@usernames}) if @usernames;
 
+  return [map{_user_to_hash($_)} $users->all];
 }
 
 1;
