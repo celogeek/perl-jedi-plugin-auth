@@ -6,7 +6,14 @@ use strict;
 use warnings;
 # VERSION
 
+use feature 'state';
 use Carp;
+use Digest::SHA1 qw/sha1/;
+use Data::UUID;
+use Path::Class;
+use Jedi::Plugin::Auth::DB;
+use DBIx::Class::Migration;
+use JSON;
 
 # connect / create / prepare db
 sub _prepare_database {
@@ -75,7 +82,34 @@ For example : admin include poweruser, user ...
 =cut
 
 sub jedi_auth_signin {
+  my ($self, %params) = @_;
+  state $uuid_generator = Data::UUID->new;
+  my @missing;
+  for my $key(qw/user password roles/) {
+    push @missing, $key if !defined $params{$key};
+  }
+  return { status => 'ko', missing => \@missing } if @missing;
 
+  $params{roles} = [split(/,/, $params{roles} // '')] if ref $params{roles} ne 'ARRAY';
+  $params{info} //= {};
+
+  my $user;
+
+  return { status => 'ko', error_msg => "$@" } if ! eval {
+    $user = $self->_jedi_auth_db->resultset('User')->create({
+      user => $params{user},
+      password => sha1($params{password}),
+      uuid => $uuid_generator->create(),
+      info => encode_json($params{info}),
+    });
+    1;
+  };
+
+  for my $role_name(@{$params{roles}}) {
+    $user->add_to_roles({name => $role_name});
+  }
+
+  return { status => 'ok' };
 }
 
 =method jedi_auth_login

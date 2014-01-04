@@ -18,6 +18,6 @@ __PACKAGE__->add_unique_constraint(
 );
 
 __PACKAGE__->has_many(user_roles => 'Jedi::Plugin::Auth::DB::Result::UsersRoles', 'role_id');
-__PACKAGE__->many_to_many(roles => 'user_roles' => 'user_id');
+__PACKAGE__->many_to_many(users => 'user_roles' => 'user');
 
 1;
