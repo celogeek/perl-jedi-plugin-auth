@@ -258,5 +258,22 @@ test_psgi $jedi->start, sub {
     is $res->content, 2, '2 users found';
   };
 
+  subtest "users" => sub {
+    my $res = $cb->(GET '/users');
+    my $users = decode_json($res->content);
+    is @$users, 2, '2 users info';
+    is_deeply [map {$_->{user}} @$users], [qw/test test2/], 'test and test2 found';
+
+    $res = $cb->(GET '/users?users=a,b,c');
+    $users = decode_json($res->content);
+    is @$users, 0, 'no user a or b or c found';
+
+    $res = $cb->(GET '/users?users=test,a,b,c');
+    $users = decode_json($res->content);
+    is @$users, 1, 'test only was found';
+    is_deeply [map {$_->{user}} @$users], [qw/test/], 'test found';
+
+  }
+
 };
 done_testing;

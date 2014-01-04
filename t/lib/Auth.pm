@@ -74,7 +74,7 @@ sub jedi_app {
 
   $app->get('/users', sub {
     my ($app, $request, $response) = @_;
-    my $users = $app->jedi_auth_users_with_role($request->params->{role});
+    my $users = $app->jedi_auth_users(split /,/x, $request->params->{users} // '');
     $response->status(200);
     $response->body(encode_json($users));
   });

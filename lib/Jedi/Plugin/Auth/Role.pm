@@ -357,7 +357,7 @@ sub jedi_auth_users {
   my $users = $self->_jedi_auth_db->resultset('User');
   $users = $users->search({user => \@usernames}) if @usernames;
 
-  return [map{_user_to_hash($_)} $users->all];
+  return [map{_user_to_hash($_)} $users->search({}, {prefetch => {'user_roles' => 'role'}})->all];
 }
 
 1;
