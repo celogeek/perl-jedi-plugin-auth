@@ -208,19 +208,24 @@ sub jedi_auth_login {
     status => 'ok',
     %{$session->{auth}}
   };
-
 }
 
 =method jedi_auth_logout
 
 Logout the current login user
 
-  $app->jedi_auth_logout
+  $app->jedi_auth_logout($request)
 
 =cut
 
 sub jedi_auth_logout {
-
+  my ($self, $request) = @_;
+  my $session = $request->session_get;
+  if (defined $session) {
+    delete $session->{auth};
+    $request->session_set($session);
+  }
+  return { status => 'ok' };
 }
 
 =method jedi_auth_update

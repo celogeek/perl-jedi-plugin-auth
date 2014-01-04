@@ -30,6 +30,15 @@ sub jedi_app {
     $response->body(encode_json($res));
   });
 
+  $app->get('/logout', sub {
+    my ($app, $request, $response) = @_;
+    my $res = $app->jedi_auth_logout(
+      $request,
+    );
+    $response->status(200);
+    $response->body(encode_json($res));
+  });
+
   $app->get('/auth_session', sub {
     my ($app, $request, $response) = @_;
     $response->status(200);
