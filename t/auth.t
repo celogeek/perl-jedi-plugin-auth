@@ -88,8 +88,9 @@ test_psgi $jedi->start, sub {
             is $resp->{status}, 'ko', 'bad password';
     }
   
+    my ($cookie, $user_info);
+
     subtest "login user" => sub {
-            # bad password
             my $res = $cb->(GET '/login?user=test&password=test');
             my $resp = decode_json($res->content);
             is $resp->{status}, 'ok', 'status ok';
@@ -97,7 +98,21 @@ test_psgi $jedi->start, sub {
             cmp_bag $resp->{roles}, ['test', 'admin'], 'roles ok';
             like $resp->{uuid}, qr{^\w+\-\w+\-\w+\-\w+\-\w+$}x, 'uuid ok';
             is_deeply $resp->{info}, {activated => 1}, 'info is ok';
-    }
+
+            $cookie = $res->header('Set-Cookie')->as_string;
+            $user_info = $resp;
+            delete $user_info->{status};
+    };
+
+    subtest "session for user" => sub {
+      my $res = $cb->(HTTP::Request->new(
+        'GET' => '/auth_session', HTTP::Headers->new(
+          'Cookie' => $cookie,
+        )
+      ));
+      my $resp = decode_json($res->content);
+      is_deeply($resp->{auth}, $user_info, 'user info ok in session');
+    };
   
   }
 };

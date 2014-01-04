@@ -163,6 +163,7 @@ sub jedi_auth_signin {
 Login the user
 
   $app->jedi_auth_login(
+    $request,
     user     => 'admin',
     password => 'admin',
   );
@@ -173,19 +174,39 @@ Return :
   
   { status => 'ko' }
   
+The user info will be save in the session of user :
+
+  $request->session_get->{auth} = {
+    user => 'admin',
+    uuid => Data::UUID string,
+    info => {
+      activated => 0,
+      label     => 'Administrator',
+      email     => 'admin@admin.local',
+      blog      => 'http://blog.celogeek.com',
+      live      => 'geistteufel@live.fr',
+      created_at => 1388163353,
+      last_login => 1388164353,
+    },
+    roles => ['admin'],
+  }
 
 =cut
 
 sub jedi_auth_login {
-  my ($self, %params) = @_;
+  my ($self, $request, %params) = @_;
   return { status => 'ko' } if !defined $params{user} || !defined $params{password};
 
   my $user = $self->_jedi_auth_db->resultset('User')->search({user => $params{user}, password => sha1_hex($params{password})})->first;
   return { status => 'ko' } if !defined $user;
 
-  return { 
+  my $session = $request->session_get // {};
+  $session->{auth} = _user_to_hash($user);
+  $request->session_set($session);
+
+  return {
     status => 'ok',
-    %{_user_to_hash($user)}
+    %{$session->{auth}}
   };
 
 }
