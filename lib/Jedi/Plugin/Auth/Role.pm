@@ -1,6 +1,6 @@
 package Jedi::Plugin::Auth::Role;
 
-# ABSTRACT: Imported Role for Jedi::Plugin::Auth
+# ABSTRACT: Imported Role for L<Jedi::Plugin::Auth>
 
 use strict;
 use warnings;
@@ -68,63 +68,7 @@ before jedi_app => sub {
   croak "You need to include and configure Jedi::Plugin::Session first." if !$app->can('jedi_session_setup');
 };
 
-=method jedi_auth_signin
-
-Create a new user
-
- $app->jedi_auth_signin(
-    user     => 'admin',
-    password => 'admin',
-    uuid     => 'XXXXXXXXXXXXXXX' #SHA1 Hex Base64
-    roles    => ['admin'],
-    info     => {
-      activated => 0,
-      label     => 'Administrator',
-      email     => 'admin@admin.local',
-      blog      => 'http://blog.celogeek.com',
-      live      => 'geistteufel@live.fr',
-      created_at => 1388163353,
-      last_login => 1388164353,
-    }
- );
-
-Roles are dynamically added. Your apps need to handle the relation between each role.
-
-For example : admin include poweruser, user ...
-
-Return :
-  {
-    status => 'ok',
-    user => 'admin',
-    uuid => Data::UUID string,
-    info => {
-      activated => 0,
-      label     => 'Administrator',
-      email     => 'admin@admin.local',
-      blog      => 'http://blog.celogeek.com',
-      live      => 'geistteufel@live.fr',
-      created_at => 1388163353,
-      last_login => 1388164353,
-    },
-    roles => ['admin'],
-  }
-
-In case of missing fields :
-
-  {
-    status => 'ko',
-    missing => ['list of missing fields'],
-  }
-
-For db errors (duplicate ...) :
-
-  {
-    status => 'ko',
-    error_msg => "$@",
-  }
-
-=cut
-
+# sign in
 sub jedi_auth_signin {
   my ($self, %params) = @_;
   delete $params{roles} if ref $params{roles} ne 'ARRAY';
@@ -159,21 +103,7 @@ sub jedi_auth_signin {
   };
 }
 
-=method jedi_auth_signout
-
-Destroy an user
-
-  $app->jedi_auth_signout('admin')
-
-If you want to destroy the current user, ensure to logout first
-
-  if ($request->session_get->{auth}{user} eq 'admin') {
-    $app->jedi_auth_logout($request);
-  }
-  $app->jedi_auth_signout('admin')
-
-=cut
-
+# sign out
 sub jedi_auth_signout {
   my ($self, $username) = @_;
   return {status => 'ko', missing => ['user']} if !defined $username;
@@ -183,41 +113,7 @@ sub jedi_auth_signout {
   return {status => 'ok'};
 }
 
-=method jedi_auth_login
-
-Login the user
-
-  $app->jedi_auth_login(
-    $request,
-    user     => 'admin',
-    password => 'admin',
-  );
-
-Return :
-  
-  { status => 'ok', uuid => "uuid string", info => { INFO HASH }, roles => [ ROLES ] }
-  
-  { status => 'ko' }
-  
-The user info will be save in the session of user :
-
-  $request->session_get->{auth} = {
-    user => 'admin',
-    uuid => Data::UUID string,
-    info => {
-      activated => 0,
-      label     => 'Administrator',
-      email     => 'admin@admin.local',
-      blog      => 'http://blog.celogeek.com',
-      live      => 'geistteufel@live.fr',
-      created_at => 1388163353,
-      last_login => 1388164353,
-    },
-    roles => ['admin'],
-  }
-
-=cut
-
+# login
 sub jedi_auth_login {
   my ($self, $request, %params) = @_;
   return { status => 'ko' } if !defined $params{user} || !defined $params{password};
@@ -235,14 +131,7 @@ sub jedi_auth_login {
   };
 }
 
-=method jedi_auth_logout
-
-Logout the current login user
-
-  $app->jedi_auth_logout($request)
-
-=cut
-
+# logout
 sub jedi_auth_logout {
   my ($self, $request) = @_;
   my $session = $request->session_get;
@@ -253,32 +142,7 @@ sub jedi_auth_logout {
   return { status => 'ok' };
 }
 
-=method jedi_auth_update
-
-Update the user account
-
-  $app->jedi_auth_update(
-    $request,
-    user => 'admin',
-    info => {
-      activated => 1,
-    }
-  )
-
-It will update the 'admin' user, and add/change the info.activated to 1. All the other info will be keep.
-
-To clear an info key :
-
-  $app->jedi_auth_update(
-    $request,
-    user => 'admin',
-    info => {
-      blog => undef,
-    }
-  )
-
-=cut
-
+# update
 sub jedi_auth_update {
   my ($self, $request, %params) = @_;
 
@@ -322,18 +186,7 @@ sub jedi_auth_update {
 
 }
 
-=method jedi_auth_users_with_role
-
-Return the list of user with a specific role.
-
-Only the "user" key is returned
-
-  $app->jedi_auth_users_with_role('admin');
-
-  # ["admin"]
-
-=cut
-
+# list of user with a specific role
 sub jedi_auth_users_with_role {
   my ($self, $rolename) = @_;
   return [] if !defined $rolename;
@@ -345,36 +198,13 @@ sub jedi_auth_users_with_role {
   return [map{$_->user} @users];
 }
 
-=method jedi_auth_users_count
-
-Return the number of users in the databases
-
-  $app->jedi_auth_users_count()
-
-  # 1
-
-=cut
-
+# count of user
 sub jedi_auth_users_count {
   my ($self) = @_;
   return $self->_jedi_auth_db->resultset('User')->count;
 }
 
-=method jedi_auth_users
-
-Return the list of all users with info :
-
-  $app->jedi_auth_users
-
-Return only the info of the user admin :
-
-  $app->jedi_auth_users('admin')
-
-Return the info of user admin and test :
-
-  $app->jedi_auth_users('admin', 'test')
-
-=cut
+# list of all users with info or just some of them
 sub jedi_auth_users {
   my ($self, @usernames) = @_;
 
