@@ -13,9 +13,12 @@ use Module::Runtime qw/use_module/;
 use B::Hooks::EndOfScope;
 
 sub import {
+  my (undef, $backend) = @_;
+  $backend //= 'SQLite';
 	my $target = caller;
 	on_scope_end {
 		$target->can('with')->('Jedi::Plugin::Auth::Role');
+    $target->can('with')->('Jedi::Plugin::Auth::Backend::' . $backend);
 	};
 	return;
 }
