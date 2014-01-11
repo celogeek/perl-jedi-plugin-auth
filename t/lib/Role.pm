@@ -1,11 +1,18 @@
-package t::lib::Auth;
-use Jedi::App;
-use Jedi::Plugin::Session;
-use Jedi::Plugin::Auth;
+package t::lib::Role;
+use strict;
+use warnings;
 use JSON;
+use Moo::Role;
 
-sub jedi_app {
+sub init_app {
   my ($app) = @_;
+
+  $app->get('/purge', sub {
+          my ($app, $request, $response) = @_;
+          $app->_jedi_auth_db->resultset('User')->delete_all;
+          $app->_jedi_auth_db->resultset('Role')->delete_all;
+          $response->status(204);
+  });
 
   $app->get('/signin', sub {
     my ($app, $request, $response) = @_;
