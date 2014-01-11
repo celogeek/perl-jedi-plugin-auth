@@ -42,27 +42,20 @@ use Moo::Role;
 sub _build__jedi_auth_db {
     my ($self) = @_;
     my $class = ref $self;
-    my ($db, $host, $port, $user, $password, $prefix) = @{$self->jedi_config->{$class}{auth}{mysql}}{qw/
-      database_name hostname port user password prefix
-    /};
+    my $config = ($self->jedi_config->{$class}{auth}{mysql} //= {});
 
-    $db //= 'test';
-    $host //= 'localhost';
-    $port //= 3306;
-    $user //= 'root';
+    $config->{database_name} //= 'test';
+    $config->{hostname}      //= 'localhost';
+    $config->{port}          //= 3306;
+    $config->{user}          //= 'root';
 
-    if (!defined $prefix) {
-      $prefix = lc($class);
-      $prefix =~ s/::/_/gx;
+    if (!defined $config->{prefix}) {
+      $config->{prefix} = lc($class);
+      $config->{prefix} =~ s/::/_/gx;
     }
 
     return _prepare_database(
-     database_name => $db,
-     hostname => $host,
-     port => $port,
-     user => $user,
-     password => $password,
-     prefix => $prefix
+        %$config
     );
 }
 
