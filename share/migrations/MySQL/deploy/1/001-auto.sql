@@ -8,8 +8,8 @@ SET foreign_key_checks=0;
 -- Table: `jedi_auth_roles`
 --
 CREATE TABLE `jedi_auth_roles` (
-  `id` integer NOT NULL,
-  `name` CHAR(80) NOT NULL,
+  `id` integer NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(80) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE `uniq_name` (`name`)
 ) ENGINE=InnoDB;
@@ -17,8 +17,8 @@ CREATE TABLE `jedi_auth_roles` (
 -- Table: `jedi_auth_users`
 --
 CREATE TABLE `jedi_auth_users` (
-  `id` integer NOT NULL,
-  `user` CHAR(80) NOT NULL,
+  `id` integer NOT NULL AUTO_INCREMENT,
+  `user` VARCHAR(80) NOT NULL,
   `password` CHAR(40) NOT NULL,
   `uuid` CHAR(36) NOT NULL,
   `info` TEXT NOT NULL,
